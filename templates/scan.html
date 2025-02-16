@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QR Code Scanner</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr"></script>
+    <style>
+      /* Elegant Dark Theme */
+      body {
+        background: linear-gradient(135deg, #121212, #1f1f1f);
+        font-family: "Poppins", sans-serif;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        color: white;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        width: 90%;
+        max-width: 400px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      h2 {
+        margin-bottom: 15px;
+        color: #ffd700;
+        font-size: 22px;
+      }
+
+      video {
+        border: 2px solid #ffd700;
+        border-radius: 12px;
+        width: 250px;
+        height: 250px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      button,
+      input {
+        margin-top: 12px;
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 8px;
+        border: none;
+        width: 100%;
+        transition: 0.3s;
+      }
+
+      input {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        text-align: center;
+        outline: none;
+      }
+
+      input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      button {
+        background: linear-gradient(90deg, #ffd700, #ffbf00);
+        color: black;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: linear-gradient(90deg, #ffbf00, #ff9900);
+        transform: scale(1.05);
+      }
+
+      .ticket-card {
+        background: linear-gradient(135deg, #333, #222);
+        color: white;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        text-align: left;
+        width: 100%;
+        max-width: 350px;
+        margin: 0 auto 15px;
+        border-left: 5px solid #ffd700;
+      }
+
+      .ticket-card p {
+        font-size: 16px;
+        margin: 8px 0;
+        padding-bottom: 5px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .ticket-card p:last-child {
+        border-bottom: none;
+      }
+
+      #logout-btn {
+        background: rgba(255, 0, 0, 0.8);
+        color: white;
+        margin-top: 20px;
+      }
+
+      #logout-btn:hover {
+        background: rgba(255, 0, 0, 1);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Logout Button -->
+
+    <!-- Scanner Block -->
+    <div class="container" id="scanner-container">
+      <h2>QR Code Scanner</h2>
+      <video id="video" autoplay></video>
+      <canvas id="canvas" hidden></canvas>
+      <p id="result">Scan a QR code...</p>
+      <button id="logout-btn">Logout</button>
+    </div>
+
+    <!-- Result Block -->
+    <div class="container hidden" id="result-container">
+      <h2>Ticket Details</h2>
+      <div class="ticket-card">
+        <p><strong>Sold By:</strong> <span id="soldby"></span></p>
+        <p><strong>Name:</strong> <span id="ticket-name"></span></p>
+        <p><strong>Phone:</strong> <span id="ticket-phone"></span></p>
+        <p><strong>Ticket Number:</strong> <span id="ticket-number"></span></p>
+      </div>
+      <button id="restart-btn">Scan Again</button>
+      <button id="logout-btn">Logout</button>
+    </div>
+
+    <!-- Form Block -->
+    <div class="container hidden" id="form-container">
+      <div id="input-details">
+        <h2>Enter Details</h2>
+        <input type="text" id="name" placeholder="Enter your name" required />
+        <input
+          type="tel"
+          id="phone"
+          placeholder="Enter your phone number"
+          required
+        />
+        <button id="submit-btn">Submit</button>
+      </div>
+      <p
+        id="responseMessage"
+        class="hidden"
+        style="
+          color: white;
+          font-weight: bold;
+          height: 50px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+        "
+      ></p>
+      <button id="restart-btn">Scan Again</button>
+      <button id="logout-btn">Logout</button>
+    </div>
+
+    <script>
+      const token = localStorage.getItem("token");
+      if (!token) {
+        window.location.href = "/";
+      }
+
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const context = canvas.getContext("2d");
+      const scannerContainer = document.getElementById("scanner-container");
+      const resultContainer = document.getElementById("result-container");
+      const formContainer = document.getElementById("form-container");
+      const restartBtn = document.getElementById("restart-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+      const submitBtn = document.getElementById("submit-btn");
+      const inputDetails = document.getElementById("input-details");
+
+      let stream;
+      let scannedCode = null;
+
+      submitBtn.addEventListener("click", async () => {
+        const name = document.getElementById("name").value;
+        const phone = document.getElementById("phone").value;
+
+        if (!name) {
+          alert("Please fill out name field.");
+          return;
+        }
+        if (!phone) {
+          alert("Please fill out phone number field.");
+          return;
+        }
+        if (!scannedCode) {
+          alert("Please rescan the QR code.");
+          location.reload();
+          return;
+        }
+
+        try {
+          const response = await fetch("/register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ name, phone, code: scannedCode, token }),
+          });
+
+          const data = await response.json();
+          if (response.ok) {
+            responseMessage.textContent =
+              data.message || "Registration successful!";
+            responseMessage.style.backgroundColor = "#28a745";
+          } else {
+            responseMessage.textContent = data.error || data.detail;
+            responseMessage.style.backgroundColor = "#28a745";
+          }
+          responseMessage.classList.remove("hidden");
+          inputDetails.classList.add("hidden");
+        } catch (error) {
+          console.error("Registration Error:", error);
+          alert("Failed to register.");
+        }
+      });
+
+      async function startCamera() {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" },
+          });
+          video.srcObject = stream;
+          video.play();
+          requestAnimationFrame(scanQRCode);
+          scannerContainer.classList.remove("hidden");
+          resultContainer.classList.add("hidden");
+          formContainer.classList.add("hidden");
+        } catch (err) {
+          alert("Camera access denied or unavailable");
+        }
+      }
+
+      async function sendQRCodeData(qrData) {
+        try {
+          const response = await fetch(
+            `/details?ticket_number=${encodeURIComponent(qrData)}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          const data = await response.json();
+
+          if (response.ok) {
+            if (!data.ticket) {
+              scannedCode = qrData; // Store the scanned code
+              stopCamera();
+              formContainer.classList.remove("hidden");
+            } else {
+              document.getElementById("soldby").textContent =
+                data.ticket.soldby;
+              document.getElementById("ticket-name").textContent =
+                data.ticket.name;
+              document.getElementById("ticket-phone").textContent =
+                data.ticket.phone;
+              document.getElementById("ticket-number").textContent =
+                data.ticket.ticket;
+              stopCamera();
+              resultContainer.classList.remove("hidden");
+            }
+          } else {
+            if (data.detail && data.detail.includes("expired")) {
+              alert("Your session has expired. Please log in again.");
+              localStorage.removeItem("token");
+              window.location.href = "/";
+            }
+            alert("Error: " + data.detail);
+            stopCamera();
+          }
+        } catch (error) {
+          alert("Failed to send QR code data");
+          stopCamera();
+        }
+      }
+
+      function scanQRCode() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = context.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          if (code && code.data) {
+            sendQRCodeData(code.data);
+          }
+        }
+        requestAnimationFrame(scanQRCode);
+      }
+
+      function stopCamera() {
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+        }
+        scannerContainer.classList.add("hidden");
+      }
+
+      restartBtn.addEventListener("click", startCamera);
+      logoutBtn.addEventListener("click", () => {
+          localStorage.removeItem("token");
+          window.location.href = "/";
+        });
+        
+      startCamera();
+    </script>
+  </body>
+</html>
