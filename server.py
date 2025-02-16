@@ -17,7 +17,7 @@ templates = Jinja2Templates(directory="templates")
 token_secret = os.getenv("JWT_SECRET_KEY", "your_secret_key")
 
 token_algorithm = "HS256"
-token_expire_minutes = 30
+token_expire_minutes = 3000
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

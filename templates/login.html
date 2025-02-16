@@ -1,134 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
     <style>
-        body {
-            background: url('https://source.unsplash.com/1600x900/?office,workspace') no-repeat center center/cover;
-            font-family: 'Poppins', sans-serif;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
+      /* Elegant Dark Theme */
+      body {
+        background: linear-gradient(135deg, #121212, #1f1f1f);
+        font-family: "Poppins", sans-serif;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        color: white;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        width: 90%;
+        max-width: 400px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      h2 {
+        margin-bottom: 15px;
+        color: #ffd700;
+        font-size: 22px;
+      }
+
+      input {
+        width: 90%;
+        padding: 12px;
+        margin-top: 12px;
+        font-size: 16px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        text-align: center;
+        outline: none;
+      }
+
+      input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 12px;
+        font-size: 16px;
+        border-radius: 8px;
+        border: none;
+        background: linear-gradient(90deg, #ffd700, #ffbf00);
+        color: black;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      button:hover {
+        background: linear-gradient(90deg, #ffbf00, #ff9900);
+        transform: scale(1.05);
+      }
+
+      .error {
+        color: #ff4d4d;
+        margin-top: 10px;
+        font-size: 14px;
+      }
+
+      #loading {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        justify-content: center;
+        display: none;
+        align-items: center;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+      }
+
+      .spinner {
+        border: 5px solid rgba(255, 255, 255, 0.3);
+        border-top: 5px solid #ffd700;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
         }
-        .login-container {
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.1);
-            width: 350px;
+        100% {
+          transform: rotate(360deg);
         }
-        h2 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-        input:focus {
-            border-color: #007bff;
-            outline: none;
-        }
-        button {
-            background-color: #007bff;
-            color: #ffffff;
-            padding: 12px 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 18px;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .forgot-password {
-            margin-top: 10px;
-            font-size: 14px;
-        }
-        .forgot-password a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-        .message {
-            margin-top: 15px;
-            font-size: 14px;
-            color: red;
-        }
+      }
     </style>
-</head>
-<body>
-    <div class="login-container">
-        <h2>Login</h2>
-        <form id="loginForm">
-            <input type="text" id="username" placeholder="Username" required><br>
-            <input type="password" id="password" placeholder="Password" required><br>
-            <button type="submit">Login</button>
-        </form>
-        <p class="forgot-password"><a href="#">Forgot Password?</a></p>
-        <p class="message" id="message"></p>
+  </head>
+  <body>
+    <div id="loading">
+      <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+      <h2>Login</h2>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <button id="login-btn">Login</button>
+      <p class="error" id="error-message"></p>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(event) {
-            event.preventDefault(); 
+      document
+        .getElementById("login-btn")
+        .addEventListener("click", async () => {
+          const loading = document.getElementById("loading");
+          loading.style.display = "flex";
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+          const errorMessage = document.getElementById("error-message");
 
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const messageElement = document.getElementById('message');
+          if (!username || !password) {
+            errorMessage.textContent = "Please fill in all fields.";
+            return;
+          }
 
-            if (!username || !password) {
-                messageElement.style.color = "red";
-                messageElement.textContent = "Please enter both username and password!";
-                return;
+          try {
+            const response = await fetch("/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({ username, password }),
+            });
+
+            const data = await response.json();
+            loading.style.display = "none";
+            if (response.ok) {
+              localStorage.setItem("token", data.access_token);
+              window.location.href = "/scan";
+            } else {
+              errorMessage.textContent = data.detail;
             }
-
-            try {
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        'username': username,
-                        'password': password
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    messageElement.style.color = "green";
-                    messageElement.textContent = "Login successful!";
-                    localStorage.setItem('token', data.access_token); 
-                    setTimeout(() => {
-                        window.location.href = "/scan"; 
-                    }, 1000);
-                } else {
-                    messageElement.style.color = "red";
-                    messageElement.textContent = data.detail || "Invalid credentials!";
-                }
-            } catch (error) {
-                messageElement.style.color = "red";
-                messageElement.textContent = "Failed to connect to server!";
-                console.error("Login Error:", error);
-            }
+          } catch (error) {
+            errorMessage.textContent = "Login failed. Please try again.";
+          }
         });
     </script>
-</body>
+  </body>
 </html>

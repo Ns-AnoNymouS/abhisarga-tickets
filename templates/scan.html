@@ -61,6 +61,7 @@
       }
 
       input {
+        width: 90%;
         background: rgba(255, 255, 255, 0.2);
         color: white;
         border: 1px solid rgba(255, 255, 255, 0.3);
@@ -108,19 +109,52 @@
         border-bottom: none;
       }
 
-      #logout-btn {
+      .logout-btn {
         background: rgba(255, 0, 0, 0.8);
         color: white;
         margin-top: 20px;
       }
 
-      #logout-btn:hover {
+      .logout-btn:hover {
         background: rgba(255, 0, 0, 1);
+      }
+
+      #loading {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        justify-content: center;
+        display: none;
+        align-items: center;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+      }
+
+      .spinner {
+        border: 5px solid rgba(255, 255, 255, 0.3);
+        border-top: 5px solid #ffd700;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
     </style>
   </head>
   <body>
-    <!-- Logout Button -->
+    <div id="loading">
+      <div class="spinner"></div>
+    </div>
 
     <!-- Scanner Block -->
     <div class="container" id="scanner-container">
@@ -128,7 +162,7 @@
       <video id="video" autoplay></video>
       <canvas id="canvas" hidden></canvas>
       <p id="result">Scan a QR code...</p>
-      <button id="logout-btn">Logout</button>
+      <button class="logout-btn">Logout</button>
     </div>
 
     <!-- Result Block -->
@@ -140,8 +174,8 @@
         <p><strong>Phone:</strong> <span id="ticket-phone"></span></p>
         <p><strong>Ticket Number:</strong> <span id="ticket-number"></span></p>
       </div>
-      <button id="restart-btn">Scan Again</button>
-      <button id="logout-btn">Logout</button>
+      <button class="restart-btn">Scan Again</button>
+      <button class="logout-btn">Logout</button>
     </div>
 
     <!-- Form Block -->
@@ -157,22 +191,23 @@
         />
         <button id="submit-btn">Submit</button>
       </div>
-      <p
-        id="responseMessage"
-        class="hidden"
-        style="
-          color: white;
-          font-weight: bold;
-          height: 50px;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-        "
-      ></p>
-      <button id="restart-btn">Scan Again</button>
-      <button id="logout-btn">Logout</button>
+      <div class="hidden" id="response-container">
+        <p
+          id="responseMessage"
+          style="
+            color: white;
+            font-weight: bold;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+          "
+        ></p>
+      </div>
+      <button class="restart-btn">Scan Again</button>
+      <button class="logout-btn">Logout</button>
     </div>
 
     <script>
@@ -187,33 +222,42 @@
       const scannerContainer = document.getElementById("scanner-container");
       const resultContainer = document.getElementById("result-container");
       const formContainer = document.getElementById("form-container");
-      const restartBtn = document.getElementById("restart-btn");
-      const logoutBtn = document.getElementById("logout-btn");
+      const responseContainer = document.getElementById("response-container");
+      const restartBtn = document.querySelectorAll(".restart-btn");
+      const logoutBtn = document.querySelectorAll(".logout-btn");
       const submitBtn = document.getElementById("submit-btn");
       const inputDetails = document.getElementById("input-details");
-
+      const loading = document.getElementById("loading");
+      
       let stream;
       let scannedCode = null;
+
+      function showLoading() {
+        loading.style.display = "flex";
+      }
+      
+      function hideLoading() {
+        loading.style.display = "none";
+      }
 
       submitBtn.addEventListener("click", async () => {
         const name = document.getElementById("name").value;
         const phone = document.getElementById("phone").value;
-
+        
         if (!name) {
           alert("Please fill out name field.");
           return;
-        }
-        else if (!phone) {
+        } else if (!phone) {
           alert("Please fill out phone number field.");
           return;
-        }
-        else if (!scannedCode) {
+        } else if (!scannedCode) {
           alert("Please rescan the QR code.");
           location.reload();
           return;
         }
 
         try {
+          showLoading();
           const response = await fetch("/register", {
             method: "POST",
             headers: {
@@ -224,15 +268,16 @@
           });
 
           const data = await response.json();
+          hideLoading();
           if (response.ok) {
             responseMessage.textContent =
               data.message || "Registration successful!";
-            responseMessage.style.backgroundColor = "#28a745";
+            responseMessage.style.color = "#28a745";
           } else {
             responseMessage.textContent = data.error || data.detail;
             responseMessage.style.backgroundColor = "#28a745";
           }
-          responseMessage.classList.remove("hidden");
+          responseContainer.classList.remove("hidden");
           inputDetails.classList.add("hidden");
         } catch (error) {
           console.error("Registration Error:", error);
@@ -258,6 +303,7 @@
 
       async function sendQRCodeData(qrData) {
         try {
+          showLoading();
           const response = await fetch(
             `/details?ticket_number=${encodeURIComponent(qrData)}`,
             {
@@ -270,7 +316,7 @@
           );
 
           const data = await response.json();
-
+          hideLoading();
           if (response.ok) {
             if (!data.ticket) {
               scannedCode = qrData; // Store the scanned code
@@ -293,8 +339,7 @@
               alert("Your session has expired. Please log in again.");
               localStorage.removeItem("token");
               window.location.href = "/";
-            }
-            else {
+            } else {
               alert("Error: " + data.detail);
             }
             stopCamera();
@@ -331,12 +376,12 @@
         scannerContainer.classList.add("hidden");
       }
 
-      restartBtn.addEventListener("click", startCamera);
-      logoutBtn.addEventListener("click", () => {
-          localStorage.removeItem("token");
-          window.location.href = "/";
-        });
-        
+      restartBtn.forEach((btn) => btn.addEventListener("click", startCamera));
+      logoutBtn.forEach((btn) => btn.addEventListener("click", () => {
+        localStorage.removeItem("token");
+        window.location.href = "/";
+      }));
+
       startCamera();
     </script>
   </body>
