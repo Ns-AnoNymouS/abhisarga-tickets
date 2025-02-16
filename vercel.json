@@ -1,0 +1,12 @@
+{
+    "name": "Abhisarga Ticketing System",
+    "version": 2,
+        "builds": [{
+        "src": "server.py",
+        "use": "@vercel/python",
+        "config": { "runtime": "python3.9" }
+    }],
+    "routes": [
+        { "src": "(.*)", "dest": "server.py" }
+    ]
+}
