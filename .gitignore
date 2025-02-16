@@ -2,3 +2,5 @@
 .mypy_cache
 .env
 __pycache__
+*.png
+*.jpg

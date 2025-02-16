@@ -228,14 +228,14 @@
       const submitBtn = document.getElementById("submit-btn");
       const inputDetails = document.getElementById("input-details");
       const loading = document.getElementById("loading");
-      
+
       let stream;
       let scannedCode = null;
 
       function showLoading() {
         loading.style.display = "flex";
       }
-      
+
       function hideLoading() {
         loading.style.display = "none";
       }
@@ -243,7 +243,7 @@
       submitBtn.addEventListener("click", async () => {
         const name = document.getElementById("name").value;
         const phone = document.getElementById("phone").value;
-        
+
         if (!name) {
           alert("Please fill out name field.");
           return;
@@ -287,6 +287,13 @@
 
       async function startCamera() {
         try {
+          scannedCode = null;
+          const nameInput = document.getElementById("name");
+          const phoneInput = document.getElementById("phone");
+
+          if (nameInput) nameInput.value = "";
+          if (phoneInput) phoneInput.value = "";
+
           stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: "environment" },
           });
@@ -377,10 +384,12 @@
       }
 
       restartBtn.forEach((btn) => btn.addEventListener("click", startCamera));
-      logoutBtn.forEach((btn) => btn.addEventListener("click", () => {
-        localStorage.removeItem("token");
-        window.location.href = "/";
-      }));
+      logoutBtn.forEach((btn) =>
+        btn.addEventListener("click", () => {
+          localStorage.removeItem("token");
+          window.location.href = "/";
+        })
+      );
 
       startCamera();
     </script>
