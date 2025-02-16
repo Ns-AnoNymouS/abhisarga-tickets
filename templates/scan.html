@@ -383,7 +383,7 @@
         scannerContainer.classList.add("hidden");
       }
 
-      restartBtn.forEach((btn) => btn.addEventListener("click", startCamera));
+      restartBtn.forEach((btn) => btn.addEventListener("click", () => location.reload()));
       logoutBtn.forEach((btn) =>
         btn.addEventListener("click", () => {
           localStorage.removeItem("token");
