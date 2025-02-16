@@ -286,26 +286,27 @@
       });
 
       async function startCamera() {
-        try {
-          scannedCode = null;
-          const nameInput = document.getElementById("name");
-          const phoneInput = document.getElementById("phone");
+        location.reload();
+        // try {
+        //   scannedCode = null;
+        //   const nameInput = document.getElementById("name");
+        //   const phoneInput = document.getElementById("phone");
 
-          if (nameInput) nameInput.value = "";
-          if (phoneInput) phoneInput.value = "";
+        //   if (nameInput) nameInput.value = "";
+        //   if (phoneInput) phoneInput.value = "";
 
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" },
-          });
-          video.srcObject = stream;
-          video.play();
-          requestAnimationFrame(scanQRCode);
-          scannerContainer.classList.remove("hidden");
-          resultContainer.classList.add("hidden");
-          formContainer.classList.add("hidden");
-        } catch (err) {
-          alert("Camera access denied or unavailable");
-        }
+        //   stream = await navigator.mediaDevices.getUserMedia({
+        //     video: { facingMode: "environment" },
+        //   });
+        //   video.srcObject = stream;
+        //   video.play();
+        //   requestAnimationFrame(scanQRCode);
+        //   scannerContainer.classList.remove("hidden");
+        //   resultContainer.classList.add("hidden");
+        //   formContainer.classList.add("hidden");
+        // } catch (err) {
+        //   alert("Camera access denied or unavailable");
+        // }
       }
 
       async function sendQRCodeData(qrData) {
