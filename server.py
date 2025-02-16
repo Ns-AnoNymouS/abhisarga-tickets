@@ -27,7 +27,7 @@ app.add_middleware(
 templates = Jinja2Templates(directory="templates")
 
 # Secret key and algorithm for JWT
-token_secret = os.getenv("JWT_SECRET_KEY", "your_secret_key")  # 
+token_secret = os.getenv("JWT_SECRET_KEY", "your_secret_key")  #
 token_algorithm = "HS256"
 token_expire_minutes = 30
 
@@ -87,15 +87,17 @@ async def scan(request: Request):
 
 @app.post("/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = await get_user(form_data.username)
-    if not user or not verify_password(form_data.password, user["password"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    access_token = create_access_token(
-        data={"sub": user["username"]},
-        expires_delta=timedelta(minutes=token_expire_minutes),
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
-
+    try:
+        user = await get_user(form_data.username)
+        if not user or not verify_password(form_data.password, user["password"]):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        access_token = create_access_token(
+            data={"sub": user["username"]},
+            expires_delta=timedelta(minutes=token_expire_minutes),
+        )
+        return {"access_token": access_token, "token_type": "bearer"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.post("/user")
 async def user(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -132,15 +134,17 @@ async def protected_route(
         ticket_details = await get_ticket(ticket_number)
         if ticket_details and "_id" in ticket_details:
             del ticket_details["_id"]
+
+        return {
+            "user": username,
+            "ticket": ticket_details,
+        }
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
-
-    return {
-        "user": username,
-        "ticket": ticket_details,
-    }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 class RegisterRequest(BaseModel):
@@ -177,6 +181,4 @@ async def register(request: RegisterRequest, token: str = Depends(oauth2_scheme)
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Internal server error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
