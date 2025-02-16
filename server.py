@@ -3,26 +3,16 @@ from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 import jwt
-from datetime import datetime, timedelta
+import dotenv
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.middleware.cors import CORSMiddleware
-import dotenv
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 import os
 
 dotenv.load_dotenv()
 
-# FastAPI instance
-app = FastAPI()
-
-# CORS setup
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Adjust this to specific origins in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 templates = Jinja2Templates(directory="templates")
 
@@ -44,7 +34,35 @@ db = client["abhisarga"]
 users_collection = db["users"]
 tickets_collection = db["tickets"]
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("🚀 Starting up: Connecting to MongoDB...")
+    
+    client = AsyncIOMotorClient(database_url)
+    db = client["abhisarga"]
+    
+    # Store the collections in the app state for global access
+    app.state.db = db
+    app.state.users_collection = db["users"]
+    app.state.tickets_collection = db["tickets"]
 
+    yield  # App runs while inside this context
+
+    print("🔴 Shutting down: Closing MongoDB connection...")
+    client.close()
+
+    
+# FastAPI instance
+app = FastAPI(lifespan=lifespan)
+
+# CORS setup
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust this to specific origins in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 async def get_user(username: str):
     return await users_collection.find_one({"username": username})
 

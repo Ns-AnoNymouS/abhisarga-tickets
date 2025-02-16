@@ -203,11 +203,11 @@
           alert("Please fill out name field.");
           return;
         }
-        if (!phone) {
+        else if (!phone) {
           alert("Please fill out phone number field.");
           return;
         }
-        if (!scannedCode) {
+        else if (!scannedCode) {
           alert("Please rescan the QR code.");
           location.reload();
           return;
@@ -294,7 +294,9 @@
               localStorage.removeItem("token");
               window.location.href = "/";
             }
-            alert("Error: " + data.detail);
+            else {
+              alert("Error: " + data.detail);
+            }
             stopCamera();
           }
         } catch (error) {
