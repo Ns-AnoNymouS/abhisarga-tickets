@@ -11,9 +11,15 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 import os
 
+import asyncio
+import sys
+
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+elif sys.platform.startswith("linux"):
+    asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+
 dotenv.load_dotenv()
-
-
 templates = Jinja2Templates(directory="templates")
 
 # Secret key and algorithm for JWT
