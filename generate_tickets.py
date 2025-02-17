@@ -1,8 +1,21 @@
 import cv2
+import dotenv
 import qrcode
+from pymongo import MongoClient
 
+import os
 import time
 import random
+
+dotenv.load_dotenv()
+
+print("Connecting Database...")
+database_url = os.getenv("DATABASE_URL", "mongodb://localhost:27017")
+client = MongoClient(database_url)
+db = client["abhisarga"]
+users_collection = db["users"]
+tickets_collection = db["tickets"]
+print("Database Connected")
 
 
 def overlay_image(background_path, overlay_path, x, y, height):
@@ -47,6 +60,7 @@ def overlay_image(background_path, overlay_path, x, y, height):
 
     return background
 
+
 def generate_qr(text, filename="qrcode.png"):
     qr = qrcode.QRCode(
         version=1,
@@ -56,10 +70,11 @@ def generate_qr(text, filename="qrcode.png"):
     )
     qr.add_data(text)
     qr.make(fit=True)
-    
+
     img = qr.make_image(fill="black", back_color="white")
     img.save(filename)
     print(f"QR code saved as {filename}")
+
 
 def generate_final_ticket():
     unique_id = f"AB{random.randint(1000, 9999)}{int(time.time() * 1000)}"
@@ -75,9 +90,11 @@ def generate_final_ticket():
     )
 
     # Save and display
-    cv2.imwrite("output2.jpg", output)
+    cv2.imwrite(f"{unique_id}.png", output)
+    tickets_collection.insert_one({"ticket": unique_id})
     # cv2.imshow("Result", output)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
+
 
 generate_final_ticket()

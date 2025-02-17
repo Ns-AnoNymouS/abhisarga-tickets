@@ -217,6 +217,7 @@
       }
 
       const video = document.getElementById("video");
+      const result = document.getElementById("result");
       const canvas = document.getElementById("canvas");
       const context = canvas.getContext("2d");
       const scannerContainer = document.getElementById("scanner-container");
@@ -249,6 +250,9 @@
           return;
         } else if (!phone) {
           alert("Please fill out phone number field.");
+          return;
+        } else if (phone.length != 10) {
+          alert("Phone number must be 10 digits.");
           return;
         } else if (!scannedCode) {
           alert("Please rescan the QR code.");
@@ -346,10 +350,17 @@
               alert("Your session has expired. Please log in again.");
               localStorage.removeItem("token");
               window.location.href = "/";
+              stopCamera();
+            } else if (data.detail && data.detail.includes("not found")) {
+              result.textContent = "Ticket not found.";
+              result.style.color = "rgba(255, 0, 0, 0.8)";
+              setTimeout(() => {
+                result.textContent = "Scan a QR code...";
+                result.style.color = "rgba(255, 255, 255, 0.8)";
+              }, 3000);
             } else {
               alert("Error: " + data.detail);
             }
-            stopCamera();
           }
         } catch (error) {
           alert("Failed to send QR code data");
@@ -383,7 +394,9 @@
         scannerContainer.classList.add("hidden");
       }
 
-      restartBtn.forEach((btn) => btn.addEventListener("click", () => location.reload()));
+      restartBtn.forEach((btn) =>
+        btn.addEventListener("click", () => location.reload())
+      );
       logoutBtn.forEach((btn) =>
         btn.addEventListener("click", () => {
           localStorage.removeItem("token");

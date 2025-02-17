@@ -44,11 +44,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_user(username: str):
     return users_collection.find_one({"username": username})
 
+
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
+
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
@@ -58,12 +61,15 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, token_secret, algorithm=token_algorithm)
 
+
 def get_ticket(ticket_number: str):
     return tickets_collection.find_one({"ticket": ticket_number})
+
 
 class Token(BaseModel):
     access_token: str
     token_type: str
+
 
 @app.get("/")
 def root(request: Request):
@@ -71,11 +77,13 @@ def root(request: Request):
         "login.html", {"request": request, "title": "Home Page"}
     )
 
+
 @app.get("/scan")
 def scan(request: Request):
     return templates.TemplateResponse(
         "scan.html", {"request": request, "title": "Home Page"}
     )
+
 
 @app.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -90,6 +98,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @app.post("/user")
 def user(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -109,6 +118,7 @@ def user(form_data: OAuth2PasswordRequestForm = Depends()):
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+
 @app.get("/details")
 def protected_route(
     request: Request,
@@ -122,12 +132,15 @@ def protected_route(
             raise HTTPException(status_code=401, detail="Invalid token")
 
         ticket_details = get_ticket(ticket_number)
+        if not ticket_details:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+
         if ticket_details and "_id" in ticket_details:
             del ticket_details["_id"]
 
         return {
             "user": username,
-            "ticket": ticket_details,
+            "ticket": ticket_details if ticket_details.get("name", None) else None,
         }
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
@@ -136,10 +149,12 @@ def protected_route(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+
 class RegisterRequest(BaseModel):
     name: str
     phone: str
     code: str
+
 
 @app.post("/register")
 def register(request: RegisterRequest, token: str = Depends(oauth2_scheme)):
@@ -151,13 +166,15 @@ def register(request: RegisterRequest, token: str = Depends(oauth2_scheme)):
 
         ticket_details = get_ticket(request.code)
 
-        tickets_collection.insert_one(
+        tickets_collection.update_one(
             {
+                "ticket": request.code,
+            },
+             {"$set":{
                 "soldby": username,
                 "name": request.name,
                 "phone": request.phone,
-                "ticket": request.code,
-            }
+            }},
         )
         return {"message": "User registered successfully"}
     except jwt.ExpiredSignatureError:
