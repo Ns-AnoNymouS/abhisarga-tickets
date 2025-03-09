@@ -4,3 +4,5 @@
 __pycache__
 *.png
 *.jpg
+!ticket_template.png
+!tickets/AB43441741419509643.png

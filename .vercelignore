@@ -1,0 +1,6 @@
+__pycache__/
+tickets/
+*.log
+*.png
+*.jpg
+*.jpeg
