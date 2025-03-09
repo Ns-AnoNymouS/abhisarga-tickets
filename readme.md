@@ -18,7 +18,7 @@ This project automates ticket generation for **Abhisarga 25**, eliminating the n
 ### 📌 1. Install Dependencies  
 Ensure **Python 3.8+** is installed. Then, run:  
 ```sh
-pip install -r requirements.txt
+pip install -r main-requirements.txt
 ```
 
 ### 🔑 2. Configure Environment Variables  
