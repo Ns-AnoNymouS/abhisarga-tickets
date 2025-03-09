@@ -82,7 +82,7 @@ Enter the number of tickets to generate. Generated tickets are saved in the **`t
 ### 🌐 5. Run the Web Server  
 Start the server using:  
 ```sh
-python server.py
+uvicorn server:app --host 0.0.0.0 --port 8000 --reload
 ```
 This launches the **web-based ticket verification system**.
 

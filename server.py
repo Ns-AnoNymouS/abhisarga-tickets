@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 import os
-import json
 
-import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -213,6 +211,3 @@ def register_ticket(request: RegisterRequest, token: str = Depends(oauth2_scheme
 
     return {"message": "User registered successfully"}
 
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
