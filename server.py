@@ -136,10 +136,9 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 
 @app.post("/user")
-async def create_user(request: Request):
+def create_user(body: dict):
     """Create a new user with admin verification and return JWT token."""
     try:
-        body = await request.json()
         admin_username = body.get("admin_username")
         admin_password = body.get("admin_password")
         new_username = body.get("new_username")
